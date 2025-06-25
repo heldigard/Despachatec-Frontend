@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 export async function loginService(email: string, password: string) {
-  // TODO: Replace with real API endpoint
-  const response = await axios.post('/api/auth/login', { email, password });
+  // Enviar usernameOrEmail según API
+  const response = await axios.post('/api/auth/login', { usernameOrEmail: email, password });
   return response.data;
 }
 

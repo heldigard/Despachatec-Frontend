@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 interface User {
   id: string;
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -45,9 +47,14 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('/api/auth/login', { email, password });
-      const { data } = await axios.get('/api/auth/me');
-      setUser(data);
+      const { data } = await axios.post('/api/auth/login', { usernameOrEmail: email, password });
+      // Usar la respuesta del backend directamente
+      setUser({
+        id: data.id,
+        name: data.nombre ?? data.username ?? '',
+        email: data.email ?? '',
+        role: data.role ?? data.roles?.[0]?.nombre ?? 'USER',
+      });
       setNotification('Inicio de sesión exitoso');
     } catch {
       setError('Credenciales inválidas');
@@ -64,6 +71,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
       await axios.post('/api/auth/logout');
       setUser(null);
       setNotification('Sesión cerrada');
+      router.push('/login');
     } catch {
       setError('Error al cerrar sesión');
       setNotification('Error al cerrar sesión');
