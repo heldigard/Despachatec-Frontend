@@ -1,11 +1,31 @@
-import { ReactNode } from 'react';
+'use client';
+import { ReactNode, useEffect } from 'react';
+import { useAuth } from '../auth-context';
+import { useRouter } from 'next/navigation';
 import Sidebar from '../../components/layout/Sidebar';
 
-// Force dynamic rendering for all dashboard pages
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 export default function DashboardLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null; // Will redirect via useEffect
+  }
+
   return (
     <div className="min-h-screen flex bg-background">
       <Sidebar />

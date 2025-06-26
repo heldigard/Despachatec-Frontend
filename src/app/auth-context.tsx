@@ -1,5 +1,13 @@
 'use client';
-import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useMemo,
+  useCallback,
+} from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -28,47 +36,73 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const checkAuth = () => {
       try {
         setLoading(true);
         setError(null);
-        const { data } = await axios.get('/api/auth/me');
-        setUser(data);
+        const token = localStorage.getItem('auth-token');
+        const userData = localStorage.getItem('user-data');
+
+        if (token && userData) {
+          const user = JSON.parse(userData);
+          setUser(user);
+        } else {
+          setUser(null);
+        }
       } catch {
         setUser(null);
+        localStorage.removeItem('auth-token');
+        localStorage.removeItem('user-data');
       } finally {
         setLoading(false);
       }
     };
-    fetchUser();
+    checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data } = await axios.post('/api/auth/login', { usernameOrEmail: email, password });
-      // Usar la respuesta del backend directamente
-      setUser({
-        id: data.id,
-        name: data.nombre ?? data.username ?? '',
-        email: data.email ?? '',
-        role: data.role ?? data.roles?.[0]?.nombre ?? 'USER',
-      });
-      setNotification('Inicio de sesión exitoso');
-    } catch {
-      setError('Credenciales inválidas');
-      setNotification('Error al iniciar sesión');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const login = useCallback(
+    async (email: string, password: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await axios.post('/api/auth/login', { usernameOrEmail: email, password });
 
-  const logout = async () => {
+        // Extraer token y datos de usuario de la respuesta de la API
+        const token = data.accessToken;
+        const userData: User = {
+          id: data.id.toString(),
+          name: data.nombre ?? data.username ?? '',
+          email: email, // Usar el email del login
+          role: 'USER', // Rol por defecto, ajustar según la API
+        };
+
+        // Guardar token y datos en localStorage
+        localStorage.setItem('auth-token', token);
+        localStorage.setItem('user-data', JSON.stringify(userData));
+
+        // Actualizar estado
+        setUser(userData);
+        setNotification('Inicio de sesión exitoso');
+
+        // Redirigir al dashboard
+        router.push('/dashboard');
+      } catch {
+        setError('Credenciales inválidas');
+        setNotification('Error al iniciar sesión');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [router],
+  );
+
+  const logout = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('/api/auth/logout');
+      // Limpiar datos locales
+      localStorage.removeItem('auth-token');
+      localStorage.removeItem('user-data');
       setUser(null);
       setNotification('Sesión cerrada');
       router.push('/login');
@@ -78,7 +112,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   const notify = (msg: string) => setNotification(msg);
 
@@ -90,7 +124,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
       logout,
       notify,
     }),
-    [user, loading],
+    [user, loading, login, logout],
   );
 
   return (

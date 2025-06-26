@@ -26,8 +26,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      // Redirect to login on client side
-      window.location.href = '/';
+      // Clear auth data and redirect to login
+      localStorage.removeItem('auth-token');
+      localStorage.removeItem('user-data');
+      window.location.href = '/login';
     }
     return Promise.reject(error instanceof Error ? error : new Error(String(error)));
   },

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('auth-token')?.value;
   const { pathname } = request.nextUrl;
 
   // Public routes - allow access
@@ -19,12 +18,8 @@ export function middleware(request: NextRequest) {
 
   // Protected routes - require authentication
   if (pathname.startsWith('/dashboard')) {
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-
-    // TODO: Add JWT verification with jose library in future iteration
-    // For now, just allow if token exists
+    // For dashboard routes, let the client-side handle authentication
+    // since we're using localStorage and can't access it from middleware
     return NextResponse.next();
   }
 
