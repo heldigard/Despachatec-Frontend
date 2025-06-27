@@ -1,70 +1,174 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ProductForm } from './ProductForm';
 import { Button } from '../ui/Button';
 import { useAuth } from '@/app/auth-context';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-}
-
-const mockProducts: Product[] = [
-  { id: '1', name: 'Pizza Margarita', price: 12 },
-  { id: '2', name: 'Hamburguesa', price: 10 },
-  { id: '3', name: 'Ensalada César', price: 8 },
-];
+import { Product, ProductFormData } from '@/types/product';
+import * as productsService from '@/services/products-service';
 
 export default function ProductsList() {
-  const { notify } = useAuth();
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const { notify, user } = useAuth();
+  const [products, setProducts] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = (product: Product) => {
-    if (editing) {
-      setProducts((prev) => prev.map((p) => (p.id === product.id ? product : p)));
-      setEditing(null);
-      notify('Producto actualizado correctamente');
-    } else {
-      setProducts((prev) => [...prev, product]);
-      notify('Producto agregado correctamente');
+  const isAdmin = user?.role === 'ADMIN';
+
+  // Cargar productos al montar el componente
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await productsService.getProducts();
+      setProducts(data);
+    } catch (err) {
+      setError('Error al cargar productos');
+      notify('Error al cargar productos');
+      console.error('Error loading products:', err);
+    } finally {
+      setLoading(false);
     }
-    setShowForm(false);
+  }, [notify]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  const handleSave = async (productData: ProductFormData) => {
+    try {
+      // Asegurar que estaActivo tenga un valor por defecto
+      const dataToSave = {
+        ...productData,
+        estaActivo: productData.estaActivo ?? true,
+      };
+
+      if (editing) {
+        // Actualizar producto existente
+        const updated = await productsService.updateProduct(editing.id, dataToSave);
+        setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+        setEditing(null);
+        notify('Producto actualizado correctamente');
+      } else {
+        // Crear nuevo producto
+        const newProduct = await productsService.createProduct(dataToSave);
+        setProducts((prev) => [...prev, newProduct]);
+        notify('Producto agregado correctamente');
+      }
+      setShowForm(false);
+    } catch (err) {
+      notify('Error al guardar producto');
+      console.error('Error saving product:', err);
+    }
   };
 
   const handleEdit = (product: Product) => {
+    if (!isAdmin) {
+      notify('Solo los administradores pueden editar productos');
+      return;
+    }
     setEditing(product);
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    notify('Producto eliminado');
+  const handleDelete = async (id: number) => {
+    if (!isAdmin) {
+      notify('Solo los administradores pueden eliminar productos');
+      return;
+    }
+
+    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+      return;
+    }
+
+    try {
+      await productsService.deleteProduct(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      notify('Producto eliminado correctamente');
+    } catch (err) {
+      notify('Error al eliminar producto');
+      console.error('Error deleting product:', err);
+    }
   };
+
+  const handleAddProduct = () => {
+    if (!isAdmin) {
+      notify('Solo los administradores pueden agregar productos');
+      return;
+    }
+    setEditing(null);
+    setShowForm(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="text-gray-600">Cargando productos...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={loadProducts}>Reintentar</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <Button
-        onClick={() => {
-          setEditing(null);
-          setShowForm(true);
-        }}
-      >
-        Agregar producto
-      </Button>
-      {showForm && <ProductForm onSave={handleSave} initial={editing || undefined} />}
-      {products.map((product) => (
-        <div key={product.id} className="flex items-center justify-between border p-2 rounded">
-          <span>{product.name}</span>
-          <span>${product.price}</span>
-          <div className="flex gap-2">
-            <Button onClick={() => handleEdit(product)}>Editar</Button>
-            <Button onClick={() => handleDelete(product.id)}>Eliminar</Button>
+      {isAdmin && <Button onClick={handleAddProduct}>Agregar producto</Button>}
+
+      {showForm && (
+        <ProductForm
+          onSaveAction={handleSave}
+          onCancelAction={() => setShowForm(false)}
+          initial={editing || undefined}
+        />
+      )}
+
+      {products.length === 0 ? (
+        <div className="text-center text-gray-600 py-8">No hay productos disponibles</div>
+      ) : (
+        products.map((product) => (
+          <div
+            key={product.id}
+            className="grid grid-cols-12 gap-4 items-center border p-4 rounded-lg bg-white shadow-sm"
+          >
+            <div className="col-span-5">
+              <div>
+                <span className="text-gray-900 font-medium">{product.nombre}</span>
+                {product.descripcion && (
+                  <p className="text-sm text-gray-500 mt-1">{product.descripcion}</p>
+                )}
+                <p className="text-sm text-gray-600">
+                  Categoría: {product.categoria} | Stock: {product.stockDisponible}
+                </p>
+              </div>
+            </div>
+            <div className="col-span-3 text-right">
+              <span className="text-gray-900 font-semibold">${product.precio.toFixed(2)}</span>
+              {!product.estaActivo && <span className="block text-xs text-red-500">Inactivo</span>}
+            </div>
+            <div className="col-span-4 flex gap-2 justify-end">
+              {isAdmin && (
+                <>
+                  <Button onClick={() => handleEdit(product)}>Editar</Button>
+                  <Button
+                    onClick={() => handleDelete(product.id)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Eliminar
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }
