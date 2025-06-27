@@ -1,70 +1,167 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ClientForm } from './ClientForm';
 import { Button } from '../ui/Button';
 import { useAuth } from '@/app/auth-context';
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-}
-
-const mockClients: Client[] = [
-  { id: '1', name: 'Juan Pérez', email: 'juan@example.com' },
-  { id: '2', name: 'Ana Gómez', email: 'ana@example.com' },
-  { id: '3', name: 'Carlos Ruiz', email: 'carlos@example.com' },
-];
+import { Client, ClientFormData } from '@/types/client';
+import * as clientsService from '@/services/clients-service';
 
 export default function ClientsList() {
-  const { notify } = useAuth();
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const { notify, user } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
   const [editing, setEditing] = useState<Client | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = (client: Client) => {
-    if (editing) {
-      setClients((prev) => prev.map((c) => (c.id === client.id ? client : c)));
-      setEditing(null);
-      notify('Cliente actualizado correctamente');
-    } else {
-      setClients((prev) => [...prev, client]);
-      notify('Cliente agregado correctamente');
+  const isAdmin = user?.role === 'ADMIN';
+
+  // Cargar clientes al montar el componente
+  const loadClients = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await clientsService.getClients();
+      setClients(data);
+    } catch (err) {
+      setError('Error al cargar clientes');
+      notify('Error al cargar clientes');
+      console.error('Error loading clients:', err);
+    } finally {
+      setLoading(false);
     }
-    setShowForm(false);
+  }, [notify]);
+
+  useEffect(() => {
+    loadClients();
+  }, [loadClients]);
+
+  const handleSave = async (clientData: ClientFormData) => {
+    try {
+      if (editing) {
+        // Actualizar cliente existente
+        const updated = await clientsService.updateClient(editing.id, clientData);
+        setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+        setEditing(null);
+        notify('Cliente actualizado correctamente');
+      } else {
+        // Crear nuevo cliente
+        const newClient = await clientsService.createClient(clientData);
+        setClients((prev) => [...prev, newClient]);
+        notify('Cliente agregado correctamente');
+      }
+      setShowForm(false);
+    } catch (err) {
+      notify('Error al guardar cliente');
+      console.error('Error saving client:', err);
+    }
   };
 
   const handleEdit = (client: Client) => {
+    if (!isAdmin) {
+      notify('Solo los administradores pueden editar clientes');
+      return;
+    }
     setEditing(client);
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
-    setClients((prev) => prev.filter((c) => c.id !== id));
-    notify('Cliente eliminado');
+  const handleDelete = async (id: number) => {
+    if (!isAdmin) {
+      notify('Solo los administradores pueden eliminar clientes');
+      return;
+    }
+
+    if (!confirm('¿Estás seguro de que quieres eliminar este cliente?')) {
+      return;
+    }
+
+    try {
+      await clientsService.deleteClient(id);
+      setClients((prev) => prev.filter((c) => c.id !== id));
+      notify('Cliente eliminado correctamente');
+    } catch (err) {
+      notify('Error al eliminar cliente');
+      console.error('Error deleting client:', err);
+    }
   };
+
+  const handleAddClient = () => {
+    if (!isAdmin) {
+      notify('Solo los administradores pueden agregar clientes');
+      return;
+    }
+    setEditing(null);
+    setShowForm(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="text-gray-600">Cargando clientes...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={loadClients}>Reintentar</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      <Button
-        onClick={() => {
-          setEditing(null);
-          setShowForm(true);
-        }}
-      >
-        Agregar cliente
-      </Button>
-      {showForm && <ClientForm onSave={handleSave} initial={editing || undefined} />}
-      {clients.map((client) => (
-        <div key={client.id} className="flex items-center justify-between border p-2 rounded">
-          <span>{client.name}</span>
-          <span>{client.email}</span>
-          <div className="flex gap-2">
-            <Button onClick={() => handleEdit(client)}>Editar</Button>
-            <Button onClick={() => handleDelete(client.id)}>Eliminar</Button>
+      {isAdmin && <Button onClick={handleAddClient}>Agregar cliente</Button>}
+
+      {showForm && (
+        <ClientForm
+          onSaveAction={handleSave}
+          onCancelAction={() => setShowForm(false)}
+          initial={editing || undefined}
+        />
+      )}
+
+      {clients.length === 0 ? (
+        <div className="text-center text-gray-600 py-8">No hay clientes registrados</div>
+      ) : (
+        clients.map((client) => (
+          <div
+            key={client.id}
+            className="grid grid-cols-12 gap-4 items-center border p-4 rounded-lg bg-white shadow-sm"
+          >
+            <div className="col-span-6">
+              <div>
+                <span className="text-gray-900 font-medium">
+                  {client.nombre} {client.apellidos}
+                </span>
+                {client.email && <p className="text-sm text-gray-600">{client.email}</p>}
+                {client.telefono && <p className="text-sm text-gray-500">Tel: {client.telefono}</p>}
+              </div>
+            </div>
+            <div className="col-span-4">
+              {client.direccion && (
+                <span className="text-sm text-gray-600">{client.direccion}</span>
+              )}
+            </div>
+            <div className="col-span-2 flex gap-2 justify-end">
+              {isAdmin && (
+                <>
+                  <Button onClick={() => handleEdit(client)}>Editar</Button>
+                  <Button
+                    onClick={() => handleDelete(client.id)}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Eliminar
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }
