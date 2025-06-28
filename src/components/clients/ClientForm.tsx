@@ -120,11 +120,18 @@ export function ClientForm({ onSaveAction, onCancelAction, initial }: Readonly<C
           />
         </div>
 
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            {initial ? 'Actualizar' : 'Agregar'} Cliente
+        <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
+          <Button
+            type="submit"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 shadow-sm"
+          >
+            {initial ? 'Actualizar Cliente' : 'Agregar Cliente'}
           </Button>
-          <Button type="button" onClick={onCancelAction} className="bg-gray-600 hover:bg-gray-700">
+          <Button
+            type="button"
+            onClick={onCancelAction}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 shadow-sm"
+          >
             Cancelar
           </Button>
         </div>
