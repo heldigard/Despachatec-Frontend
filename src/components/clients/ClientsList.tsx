@@ -114,6 +114,20 @@ export default function ClientsList() {
 
   return (
     <div className="space-y-4">
+      {!isAdmin && (
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                <strong>Modo solo lectura:</strong> Como usuario con rol USER, solo puedes consultar
+                la información de clientes. Los administradores pueden crear, editar y eliminar
+                clientes.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isAdmin && <Button onClick={handleAddClient}>Agregar cliente</Button>}
 
       {showForm && (

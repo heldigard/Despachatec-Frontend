@@ -3,9 +3,9 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="max-w-md w-full space-y-8 p-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">DespachaFácil</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">DespachaTec</h1>
           <p className="text-lg text-gray-600 mb-8">
-            Sistema de gestión integral para despachos profesionales
+            Sistema de gestión integral para ordenes y despachos
           </p>
         </div>
 

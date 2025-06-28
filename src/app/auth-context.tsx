@@ -69,11 +69,32 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
         // Extraer token y datos de usuario de la respuesta de la API
         const token = data.accessToken;
+
+        // Extraer rol desde el array de roles del backend
+        // El backend devuelve roles como ["ROLE_ADMIN", "ADMIN"] o ["ROLE_USER", "USER"]
+        let userRole: 'ADMIN' | 'USER' = 'USER'; // Por defecto USER
+        if (data.roles && Array.isArray(data.roles) && data.roles.length > 0) {
+          // Buscar si alguno de los roles indica que es ADMIN
+          const hasAdminRole = data.roles.some((role: string | { nombre: string }) => {
+            if (typeof role === 'string') {
+              // Verificar tanto "ADMIN" como "ROLE_ADMIN"
+              return role === 'ADMIN' || role === 'ROLE_ADMIN';
+            }
+            // Si es objeto con propiedad nombre
+            else if (role && typeof role === 'object' && role.nombre) {
+              return role.nombre === 'ADMIN' || role.nombre === 'ROLE_ADMIN';
+            }
+            return false;
+          });
+
+          userRole = hasAdminRole ? 'ADMIN' : 'USER';
+        }
+
         const userData: User = {
           id: data.id.toString(),
           name: data.nombre ?? data.username ?? '',
           email: email, // Usar el email del login
-          role: 'USER', // Rol por defecto, ajustar según la API
+          role: userRole,
         };
 
         // Guardar token y datos en localStorage

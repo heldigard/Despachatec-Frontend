@@ -9,8 +9,11 @@ import * as productsService from '@/services/products-service';
 import { Order } from '@/types/order';
 
 export default function OrdersList() {
-  const { notify } = useAuth();
+  const { notify, user } = useAuth();
   const { ordersQuery, deleteOrder, changeOrderStatus, createOrder, updateOrder } = useOrders();
+
+  // Verificar si el usuario es administrador
+  const isAdmin = user?.role === 'ADMIN';
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Order | null>(null);
@@ -97,17 +100,32 @@ export default function OrdersList() {
 
   return (
     <div className="space-y-4">
-      <button
-        className="bg-green-600 text-white px-4 py-2 rounded mb-2"
-        onClick={() => {
-          setShowForm((v) => !v);
-          setEditing(null);
-        }}
-      >
-        {showForm && !editing ? 'Cancelar' : 'Nueva Orden'}
-      </button>
+      {!isAdmin && (
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                <strong>Modo solo lectura:</strong> Como usuario con rol USER, solo puedes consultar
+                los pedidos. Los administradores pueden crear, editar y eliminar pedidos.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {showForm && (
+      {isAdmin && (
+        <button
+          className="bg-green-600 text-white px-4 py-2 rounded mb-2 hover:bg-green-700"
+          onClick={() => {
+            setShowForm((v) => !v);
+            setEditing(null);
+          }}
+        >
+          {showForm && !editing ? 'Cancelar' : 'Nueva Orden'}
+        </button>
+      )}
+
+      {showForm && isAdmin && (
         <OrderForm
           onSubmit={editing ? handleUpdate : handleCreate}
           loading={createOrder.isPending || updateOrder.isPending}
@@ -155,7 +173,7 @@ export default function OrdersList() {
             )}
 
             <div className="flex gap-2">
-              {order.estado !== 'ENTREGADO' && order.estado !== 'CANCELADO' && (
+              {isAdmin && order.estado !== 'ENTREGADO' && order.estado !== 'CANCELADO' && (
                 <button
                   className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                   onClick={() => {
@@ -179,26 +197,30 @@ export default function OrdersList() {
                 </button>
               )}
 
-              <button
-                className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
-                onClick={() => handleEdit(order)}
-              >
-                Editar
-              </button>
+              {isAdmin && (
+                <>
+                  <button
+                    className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
+                    onClick={() => handleEdit(order)}
+                  >
+                    Editar
+                  </button>
 
-              <button
-                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-                onClick={() => {
-                  if (confirm('¿Estás seguro de eliminar este pedido?')) {
-                    deleteOrder.mutate(order.id.toString(), {
-                      onSuccess: () => notify('Pedido eliminado correctamente'),
-                      onError: () => notify('Error al eliminar el pedido'),
-                    });
-                  }
-                }}
-              >
-                Eliminar
-              </button>
+                  <button
+                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                    onClick={() => {
+                      if (confirm('¿Estás seguro de eliminar este pedido?')) {
+                        deleteOrder.mutate(order.id.toString(), {
+                          onSuccess: () => notify('Pedido eliminado correctamente'),
+                          onError: () => notify('Error al eliminar el pedido'),
+                        });
+                      }
+                    }}
+                  >
+                    Eliminar
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ))}
