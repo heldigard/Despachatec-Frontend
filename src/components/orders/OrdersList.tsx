@@ -7,6 +7,7 @@ import { Product } from '@/types/product';
 import { useQuery } from '@tanstack/react-query';
 import * as productsService from '@/services/products-service';
 import { Order } from '@/types/order';
+import { Edit, Trash2 } from 'lucide-react';
 
 export default function OrdersList() {
   const { notify, user } = useAuth();
@@ -200,14 +201,15 @@ export default function OrdersList() {
               {isAdmin && (
                 <>
                   <button
-                    className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm text-sm"
                     onClick={() => handleEdit(order)}
+                    title="Editar pedido"
                   >
-                    Editar
+                    <Edit className="h-4 w-4" />
                   </button>
 
                   <button
-                    className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm text-sm"
                     onClick={() => {
                       if (confirm('¿Estás seguro de eliminar este pedido?')) {
                         deleteOrder.mutate(order.id.toString(), {
@@ -216,8 +218,9 @@ export default function OrdersList() {
                         });
                       }
                     }}
+                    title="Eliminar pedido"
                   >
-                    Eliminar
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </>
               )}

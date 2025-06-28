@@ -3,17 +3,18 @@ import { useState } from 'react';
 import { Order, OrderDetail } from '@/types/order';
 import { Product } from '@/types/product';
 import { useAuth } from '@/app/auth-context';
+import { Trash2 } from 'lucide-react';
 
 interface OrderFormProps {
   readonly initialData?: Partial<Order>;
-  readonly onSubmit: (data: Partial<Order>) => void;
+  readonly onSubmitAction: (data: Partial<Order>) => void;
   readonly loading?: boolean;
   readonly products?: Product[];
 }
 
 export default function OrderForm({
   initialData = {},
-  onSubmit,
+  onSubmitAction,
   loading,
   products = [],
 }: Readonly<OrderFormProps>) {
@@ -39,7 +40,7 @@ export default function OrderForm({
         return sum + item.subtotal;
       }
       const prod = products.find((p) => p.id === item.productoId);
-      return sum + (prod ? prod.price * item.cantidad : 0);
+      return sum + (prod ? prod.precio * item.cantidad : 0);
     }, 0);
   };
 
@@ -70,7 +71,7 @@ export default function OrderForm({
       orderData.empleadoId = parseInt(empleadoId);
     }
 
-    onSubmit(orderData);
+    onSubmitAction(orderData);
   };
 
   const addProduct = () => {
@@ -81,7 +82,7 @@ export default function OrderForm({
     setDetalles(detalles.filter((_, i) => i !== index));
   };
 
-  const updateProduct = (index: number, field: keyof OrderDetail, value: any) => {
+  const updateProduct = (index: number, field: keyof OrderDetail, value: string | number) => {
     const newDetalles = [...detalles];
     newDetalles[index] = { ...newDetalles[index], [field]: value };
 
@@ -89,15 +90,15 @@ export default function OrderForm({
     if (field === 'productoId') {
       const product = products.find((p) => p.id === value);
       if (product) {
-        newDetalles[index].nombreProducto = product.name;
-        newDetalles[index].precioUnitario = product.price;
-        newDetalles[index].subtotal = product.price * newDetalles[index].cantidad;
+        newDetalles[index].nombreProducto = product.nombre;
+        newDetalles[index].precioUnitario = product.precio;
+        newDetalles[index].subtotal = product.precio * newDetalles[index].cantidad;
       }
     }
 
     // Si cambió la cantidad, recalcular subtotal
-    if (field === 'cantidad' && newDetalles[index].precioUnitario) {
-      newDetalles[index].subtotal = newDetalles[index].precioUnitario! * value;
+    if (field === 'cantidad' && newDetalles[index].precioUnitario && typeof value === 'number') {
+      newDetalles[index].subtotal = newDetalles[index].precioUnitario * value;
     }
 
     setDetalles(newDetalles);
@@ -152,7 +153,7 @@ export default function OrderForm({
 
       <div>
         <div className="flex justify-between items-center mb-2">
-          <label className="block">Productos</label>
+          <span className="block font-medium">Productos</span>
           <button
             type="button"
             onClick={addProduct}
@@ -163,11 +164,14 @@ export default function OrderForm({
         </div>
 
         {detalles.map((detalle, index) => (
-          <div key={index} className="border p-3 rounded mb-2">
+          <div key={`detalle-${index}-${detalle.productoId}`} className="border p-3 rounded mb-2">
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="block text-sm">Producto</label>
+                <label htmlFor={`producto-${index}`} className="block text-sm">
+                  Producto
+                </label>
                 <select
+                  id={`producto-${index}`}
                   value={detalle.productoId}
                   onChange={(e) => updateProduct(index, 'productoId', parseInt(e.target.value))}
                   className="border p-1 rounded w-full text-sm"
@@ -175,15 +179,18 @@ export default function OrderForm({
                   <option value={0}>Seleccionar producto</option>
                   {products.map((product) => (
                     <option key={product.id} value={product.id}>
-                      {product.name} - ${product.price}
+                      {product.nombre} - ${product.precio}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm">Cantidad</label>
+                <label htmlFor={`cantidad-${index}`} className="block text-sm">
+                  Cantidad
+                </label>
                 <input
+                  id={`cantidad-${index}`}
                   type="number"
                   min="1"
                   value={detalle.cantidad}
@@ -196,9 +203,10 @@ export default function OrderForm({
                 <button
                   type="button"
                   onClick={() => removeProduct(index)}
-                  className="bg-red-600 text-white px-2 py-1 rounded text-sm"
+                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm text-sm"
+                  title="Eliminar producto"
                 >
-                  Eliminar
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -217,7 +225,11 @@ export default function OrderForm({
         disabled={loading}
         className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
       >
-        {loading ? 'Guardando...' : initialData?.id ? 'Actualizar Orden' : 'Crear Orden'}
+        {(() => {
+          if (loading) return 'Guardando...';
+          if (initialData?.id) return 'Actualizar Orden';
+          return 'Crear Orden';
+        })()}
       </button>
     </form>
   );

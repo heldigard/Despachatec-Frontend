@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { useAuth } from '@/app/auth-context';
 import { Client, ClientFormData } from '@/types/client';
 import * as clientsService from '@/services/clients-service';
+import { Edit, Trash2 } from 'lucide-react';
 
 export default function ClientsList() {
   const { notify, user } = useAuth();
@@ -163,12 +164,19 @@ export default function ClientsList() {
             <div className="col-span-2 flex gap-2 justify-end">
               {isAdmin && (
                 <>
-                  <Button onClick={() => handleEdit(client)}>Editar</Button>
+                  <Button
+                    onClick={() => handleEdit(client)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm"
+                    title="Editar cliente"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                   <Button
                     onClick={() => handleDelete(client.id)}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm"
+                    title="Eliminar cliente"
                   >
-                    Eliminar
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </>
               )}

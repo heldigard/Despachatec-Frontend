@@ -1,21 +1,22 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Product } from '@/types/product';
+import { Trash2 } from 'lucide-react';
 
 interface ProductSelectorProps {
   readonly products: Product[];
-  readonly value: Array<{ productId: string; quantity: number }>;
-  readonly onChange: (value: Array<{ productId: string; quantity: number }>) => void;
+  readonly value: Array<{ productId: number; quantity: number }>;
+  readonly onChangeAction: (value: Array<{ productId: number; quantity: number }>) => void;
 }
 
-export function ProductSelector({ products, value, onChange }: ProductSelectorProps) {
+export function ProductSelector({ products, value, onChangeAction }: ProductSelectorProps) {
   const [selected, setSelected] = useState(value);
 
   useEffect(() => {
-    onChange(selected);
-  }, [selected, onChange]);
+    onChangeAction(selected);
+  }, [selected, onChangeAction]);
 
-  const handleAdd = (productId: string) => {
+  const handleAdd = (productId: number) => {
     setSelected((prev) => {
       const exists = prev.find((p) => p.productId === productId);
       if (exists) return prev;
@@ -23,11 +24,11 @@ export function ProductSelector({ products, value, onChange }: ProductSelectorPr
     });
   };
 
-  const handleRemove = (productId: string) => {
+  const handleRemove = (productId: number) => {
     setSelected((prev) => prev.filter((p) => p.productId !== productId));
   };
 
-  const handleQuantity = (productId: string, quantity: number) => {
+  const handleQuantity = (productId: number, quantity: number) => {
     setSelected((prev) => prev.map((p) => (p.productId === productId ? { ...p, quantity } : p)));
   };
 
@@ -42,7 +43,7 @@ export function ProductSelector({ products, value, onChange }: ProductSelectorPr
             onClick={() => handleAdd(product.id)}
             disabled={!!selected.find((p) => p.productId === product.id)}
           >
-            {product.name}
+            {product.nombre}
           </button>
         ))}
       </div>
@@ -50,7 +51,7 @@ export function ProductSelector({ products, value, onChange }: ProductSelectorPr
         const prod = products.find((p) => p.id === item.productId);
         return (
           <div key={item.productId} className="flex items-center gap-2">
-            <span>{prod?.name}</span>
+            <span>{prod?.nombre}</span>
             <input
               type="number"
               min={1}
@@ -61,9 +62,10 @@ export function ProductSelector({ products, value, onChange }: ProductSelectorPr
             <button
               type="button"
               onClick={() => handleRemove(item.productId)}
-              className="text-red-600"
+              className="bg-red-600 hover:bg-red-700 text-white font-medium py-1 px-3 rounded-lg transition-colors duration-200 shadow-sm text-sm"
+              title="Eliminar producto"
             >
-              Eliminar
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
         );

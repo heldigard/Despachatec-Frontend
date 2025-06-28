@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { useAuth } from '@/app/auth-context';
 import { Product, ProductFormData } from '@/types/product';
 import * as productsService from '@/services/products-service';
+import { Edit, Trash2 } from 'lucide-react';
 
 export default function ProductsList() {
   const { notify, user } = useAuth();
@@ -170,12 +171,19 @@ export default function ProductsList() {
             <div className="col-span-4 flex gap-2 justify-end">
               {isAdmin && (
                 <>
-                  <Button onClick={() => handleEdit(product)}>Editar</Button>
+                  <Button
+                    onClick={() => handleEdit(product)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm"
+                    title="Editar producto"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
                   <Button
                     onClick={() => handleDelete(product.id)}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm"
+                    title="Eliminar producto"
                   >
-                    Eliminar
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </>
               )}
