@@ -42,3 +42,25 @@ export const getAllProductsAdmin = async (): Promise<Product[]> => {
   const { data } = await apiClient.get(`${API_URL}/admin/all`);
   return data;
 };
+
+export const getProductCategories = async (): Promise<string[]> => {
+  try {
+    const { data } = await apiClient.get(`${API_URL}/categorias`);
+    return data.sort((a: string, b: string) => a.localeCompare(b, 'es')); // Ordenar alfabéticamente
+  } catch (error) {
+    console.error('Error al obtener categorías desde el endpoint:', error);
+    // Fallback a categorías conocidas si falla la API
+    return [
+      'ACOMPAÑAMIENTOS',
+      'BEBIDAS',
+      'BEBIDAS_ALCOHOLICAS',
+      'ENSALADAS',
+      'ENTRADAS',
+      'HAMBURGUESAS',
+      'OTROS',
+      'PIZZAS',
+      'POSTRES',
+      'TACOS',
+    ];
+  }
+};

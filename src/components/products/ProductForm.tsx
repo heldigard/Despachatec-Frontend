@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { Button } from '../ui/Button';
 import { useAuth } from '@/app/auth-context';
+import { useCategories } from '@/hooks/useCategories';
+import { formatCategoryName } from '@/lib/utils/categories';
 import { Product, ProductFormData } from '@/types/product';
 
 interface ProductFormProps {
@@ -12,6 +14,7 @@ interface ProductFormProps {
 
 export function ProductForm({ onSaveAction, onCancelAction, initial }: Readonly<ProductFormProps>) {
   const { notify } = useAuth();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const [formData, setFormData] = useState<ProductFormData>({
     nombre: initial?.nombre ?? '',
     descripcion: initial?.descripcion ?? '',
@@ -36,10 +39,17 @@ export function ProductForm({ onSaveAction, onCancelAction, initial }: Readonly<
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
-      <h3 className="text-lg font-semibold">
-        {initial ? 'Editar Producto' : 'Agregar Nuevo Producto'}
-      </h3>
+    <div className="bg-white p-6 rounded-lg border shadow-sm space-y-6">
+      <div className="border-b border-gray-200 pb-4">
+        <h3 className="text-xl font-semibold text-gray-900">
+          {initial ? 'Editar Producto' : 'Agregar Nuevo Producto'}
+        </h3>
+        <p className="text-sm text-gray-600 mt-1">
+          {initial
+            ? 'Modifica los datos del producto'
+            : 'Completa la información del nuevo producto'}
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -73,15 +83,27 @@ export function ProductForm({ onSaveAction, onCancelAction, initial }: Readonly<
               value={formData.categoria}
               onChange={(e) => handleInputChange('categoria', e.target.value)}
               required
+              disabled={categoriesLoading}
             >
-              <option value="">Seleccionar categoría</option>
-              <option value="Pizzas">Pizzas</option>
-              <option value="Hamburguesas">Hamburguesas</option>
-              <option value="Ensaladas">Ensaladas</option>
-              <option value="Bebidas">Bebidas</option>
-              <option value="Postres">Postres</option>
-              <option value="Otros">Otros</option>
+              <option value="">
+                {categoriesLoading ? 'Cargando categorías...' : 'Seleccionar categoría'}
+              </option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {formatCategoryName(category)}
+                </option>
+              ))}
+              {categoriesError && (
+                <option value="" disabled>
+                  Error al cargar categorías
+                </option>
+              )}
             </select>
+            {categoriesError && (
+              <p className="mt-1 text-sm text-red-600">
+                {categoriesError} - Usando categorías predefinidas
+              </p>
+            )}
           </div>
 
           <div>
@@ -148,23 +170,36 @@ export function ProductForm({ onSaveAction, onCancelAction, initial }: Readonly<
           />
         </div>
 
-        <div>
-          <label className="flex items-center space-x-2">
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex items-center space-x-3">
             <input
+              id="product-activo"
               type="checkbox"
               checked={formData.estaActivo}
               onChange={(e) => handleInputChange('estaActivo', e.target.checked)}
-              className="rounded"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
             />
-            <span className="text-sm font-medium text-gray-700">Producto activo</span>
-          </label>
+            <label htmlFor="product-activo" className="flex flex-col cursor-pointer">
+              <span className="text-sm font-medium text-gray-900">Producto activo</span>
+              <span className="text-xs text-gray-500">
+                El producto estará disponible para la venta
+              </span>
+            </label>
+          </div>
         </div>
 
-        <div className="flex gap-2 pt-4">
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            {initial ? 'Actualizar' : 'Agregar'} Producto
+        <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-gray-200">
+          <Button
+            type="submit"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 shadow-sm"
+          >
+            {initial ? 'Actualizar Producto' : 'Agregar Producto'}
           </Button>
-          <Button type="button" onClick={onCancelAction} className="bg-gray-600 hover:bg-gray-700">
+          <Button
+            type="button"
+            onClick={onCancelAction}
+            className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 shadow-sm"
+          >
             Cancelar
           </Button>
         </div>
