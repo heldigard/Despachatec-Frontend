@@ -4,14 +4,37 @@ import './globals.css';
 import { AuthProvider } from './auth-context';
 import QueryProvider from '@/lib/providers/query-provider';
 
+// Configuración de fuentes con fallbacks
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
+  display: 'swap', // Mejora la carga de fuentes
+  fallback: [
+    'ui-sans-serif',
+    'system-ui',
+    '-apple-system',
+    'BlinkMacSystemFont',
+    'Segoe UI',
+    'Roboto',
+    'Helvetica Neue',
+    'Arial',
+    'sans-serif',
+  ],
 });
 
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
+  display: 'swap',
+  fallback: [
+    'ui-monospace',
+    'SFMono-Regular',
+    'Monaco',
+    'Consolas',
+    'Liberation Mono',
+    'Courier New',
+    'monospace',
+  ],
 });
 
 export const metadata: Metadata = {

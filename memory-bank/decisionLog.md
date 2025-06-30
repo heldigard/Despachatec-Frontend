@@ -135,6 +135,87 @@
 - [ ] **Monitoring**: Evaluar Sentry para error tracking
 - [ ] **Analytics**: Considerar Next.js Analytics o Google Analytics
 
+[2025-06-26 15:45:00] - **AUTH-001: Arquitectura de Autenticación Basada en localStorage**
+
+**Contexto**: Sistema de autenticación tenía inconsistencias críticas causando redirects incorrectos
+
+**Decisión**: Adoptar arquitectura client-side completa para autenticación:
+- **Token storage**: localStorage para persistencia del JWT
+- **Auth verification**: Client-side en dashboard layout + API interceptors  
+- **Middleware**: Simplificado, sin verificación server-side de tokens
+- **Error handling**: API client maneja 401s con limpieza y redirect a /login
+
+**Alternativas consideradas**:
+1. **httpOnly cookies + server-side verification**: Mayor seguridad pero complejo para SPA
+2. **Arquitectura híbrida**: Mezcla cookies + localStorage (descartada por complejidad)
+
+**Justificación**: 
+- Simplicidad de implementación para proyecto de desarrollo
+- Consistencia total entre componentes
+- Flexibilidad para futuras integraciones
+- Menor complejidad de debugging
+
+**Trade-offs aceptados**:
+- Token expuesto en localStorage (riesgo XSS)
+- Verificación client-side (bypasseable pero API protege endpoints)
+
 ---
 
-_Última actualización: 2025-06-21 12:55:00_
+## Decisiones de Stack Tecnológico
+
+[2025-06-21 12:30:00] - **STACK-001: Migración completa a Next.js 14**
+
+---
+
+[2025-06-28 16:40:00] - **IMPLEMENTACIÓN DE CONTROL DE ACCESO BASADO EN ROLES (RBAC)**
+
+**Decisión**: Implementar control de roles granular en todas las vistas del dashboard para diferenciar entre usuarios ADMIN y USER.
+
+**Contexto**: El sistema necesitaba restricciones claras donde los administradores pueden hacer CRUD completo mientras que los usuarios regulares solo pueden consultar información.
+
+**Solución implementada**:
+- **Verificación de roles client-side**: `const isAdmin = user?.role === 'ADMIN'`
+- **Renderizado condicional**: Botones de acción solo para ADMIN
+- **Mensajes informativos**: Banners explicativos para usuarios USER 
+- **UX consistente**: Mismo patrón aplicado en todas las vistas (pedidos, productos, clientes)
+
+**Patrón adoptado**:
+```tsx
+// Verificación de rol
+const isAdmin = user?.role === 'ADMIN';
+
+// Botones solo para ADMIN  
+{isAdmin && <Button onClick={action}>Crear/Editar/Eliminar</Button>}
+
+// Mensaje informativo para USER
+{!isAdmin && <div className="bg-blue-50">Modo solo lectura...</div>}
+```
+
+**Beneficios**:
+- ✅ Seguridad: Control de acceso claro por funcionalidad
+- ✅ UX: Los usuarios entienden sus limitaciones
+- ✅ Consistencia: Mismo patrón en toda la aplicación
+- ✅ Mantenibilidad: Fácil de extender a nuevos roles
+
+**Impacto**: Sistema completamente funcional con control de roles robusto, listo para producción.
+
+[2025-06-28 22:45:00] - **DECISIÓN: Migración a endpoint dedicado de categorías**
+
+**Contexto**: Inicialmente se extraían categorías únicas de la lista de productos completos. El usuario implementó un endpoint dedicado `/api/productos/categorias` en el backend.
+
+**Decisión tomada**: Migrar desde extracción de categorías de productos a endpoint dedicado
+
+**Razones**:
+- **Performance**: Reduce transferencia de datos significativamente
+- **Precisión**: Categorías vienen directamente sin procesamiento
+- **Semántica**: Endpoint específico para una responsabilidad específica
+- **Escalabilidad**: Mejor para cuando haya miles de productos
+
+**Implementación**:
+- Actualizada función `getProductCategories()` en `products-service.ts`
+- Mantenido mismo fallback y error handling
+- Sin cambios en UI/UX - migración transparente
+
+**Resultado**: Sistema más eficiente y mejor arquitecturado
+
+_Última actualización: 2025-06-28 22:45:00_

@@ -118,5 +118,27 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Fuentes de respaldo para compatibilidad */
+    font-family:
+      var(--font-geist-sans),
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      'Helvetica Neue',
+      Arial,
+      sans-serif;
+  }
+
+  /* Asegurar fuentes monospace para elementos de código */
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family:
+      var(--font-geist-mono), ui-monospace, SFMono-Regular, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
   }
 }
