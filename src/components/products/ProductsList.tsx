@@ -17,6 +17,13 @@ export default function ProductsList() {
 
   const isAdmin = user?.role === 'ADMIN';
 
+  // Función auxiliar para determinar el color del stock
+  const getStockColorClass = (stock: number): string => {
+    if (stock <= 10) return 'text-destructive';
+    if (stock <= 20) return 'text-yellow-600';
+    return 'text-green-600';
+  };
+
   // Cargar productos al montar el componente
   const loadProducts = useCallback(async () => {
     try {
@@ -120,76 +127,209 @@ export default function ProductsList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="p-6 space-y-6">
+      {/* Alert para usuarios no admin */}
       {!isAdmin && (
-        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-          <div className="flex">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-xs font-medium">i</span>
+              </div>
+            </div>
             <div className="ml-3">
-              <p className="text-sm text-blue-700">
-                <strong>Modo solo lectura:</strong> Como usuario con rol USER, solo puedes consultar
-                el catálogo de productos. Los administradores pueden crear, editar y eliminar
-                productos.
+              <h3 className="text-sm font-medium text-blue-800">Modo solo lectura</h3>
+              <p className="mt-1 text-sm text-blue-700">
+                Como usuario con rol USER, solo puedes consultar el catálogo de productos. Los
+                administradores pueden crear, editar y eliminar productos.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {isAdmin && <Button onClick={handleAddProduct}>Agregar producto</Button>}
+      {/* Header con botón de agregar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <h3 className="text-lg font-semibold text-foreground">Productos</h3>
+          <span className="bg-muted text-muted-foreground px-2 py-1 rounded-full text-xs font-medium">
+            {products.length} {products.length === 1 ? 'producto' : 'productos'}
+          </span>
+        </div>
+        {isAdmin && (
+          <button onClick={handleAddProduct} className="btn-primary flex items-center space-x-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            <span>Agregar producto</span>
+          </button>
+        )}
+      </div>
 
+      {/* Formulario de producto */}
       {showForm && (
-        <ProductForm
-          onSaveAction={handleSave}
-          onCancelAction={() => setShowForm(false)}
-          initial={editing || undefined}
-        />
+        <div className="bg-muted/50 rounded-lg border p-6">
+          <ProductForm
+            onSaveAction={handleSave}
+            onCancelAction={() => setShowForm(false)}
+            initial={editing || undefined}
+          />
+        </div>
       )}
 
+      {/* Lista de productos */}
       {products.length === 0 ? (
-        <div className="text-center text-gray-600 py-8">No hay productos disponibles</div>
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg
+              className="w-8 h-8 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-foreground mb-2">No hay productos disponibles</h3>
+          <p className="text-muted-foreground">
+            {isAdmin
+              ? 'Comienza agregando tu primer producto.'
+              : 'Aún no hay productos en el catálogo.'}
+          </p>
+        </div>
       ) : (
-        products.map((product) => (
-          <div
-            key={product.id}
-            className="grid grid-cols-12 gap-4 items-center border p-4 rounded-lg bg-white shadow-sm"
-          >
-            <div className="col-span-5">
-              <div>
-                <span className="text-gray-900 font-medium">{product.nombre}</span>
-                {product.descripcion && (
-                  <p className="text-sm text-gray-500 mt-1">{product.descripcion}</p>
-                )}
-                <p className="text-sm text-gray-600">
-                  Categoría: {product.categoria} | Stock: {product.stockDisponible}
-                </p>
+        <div className="space-y-3">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="group bg-card hover:bg-accent/50 border rounded-lg transition-all duration-200 hover:shadow-md"
+            >
+              <div className="p-4">
+                <div className="flex items-start justify-between">
+                  {/* Información del producto */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start space-x-4">
+                      {/* Avatar del producto */}
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg
+                          className="w-6 h-6 text-primary"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          />
+                        </svg>
+                      </div>
+
+                      {/* Detalles */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="text-lg font-semibold text-foreground truncate">
+                            {product.nombre}
+                          </h4>
+                          <div className="flex items-center space-x-2">
+                            {product.estaActivo ? (
+                              <span className="badge badge-success">Activo</span>
+                            ) : (
+                              <span className="badge badge-destructive">Inactivo</span>
+                            )}
+                            <span className="badge badge-secondary">{product.categoria}</span>
+                          </div>
+                        </div>
+
+                        {product.descripcion && (
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {product.descripcion}
+                          </p>
+                        )}
+
+                        <div className="flex items-center space-x-4 text-sm">
+                          <div className="flex items-center space-x-1">
+                            <svg
+                              className="w-4 h-4 text-muted-foreground"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.997 1.997 0 013 12V7a4 4 0 014-4z"
+                              />
+                            </svg>
+                            <span className="text-muted-foreground">Stock:</span>
+                            <span
+                              className={`font-medium ${getStockColorClass(
+                                product.stockDisponible,
+                              )}`}
+                            >
+                              {product.stockDisponible}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center space-x-1">
+                            <svg
+                              className="w-4 h-4 text-muted-foreground"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                              />
+                            </svg>
+                            <span className="text-2xl font-bold text-foreground">
+                              ${product.precio.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Acciones */}
+                  {isAdmin && (
+                    <div className="flex items-center space-x-2 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors duration-200"
+                        title="Editar producto"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors duration-200"
+                        title="Eliminar producto"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="col-span-3 text-right">
-              <span className="text-gray-900 font-semibold">${product.precio.toFixed(2)}</span>
-              {!product.estaActivo && <span className="block text-xs text-red-500">Inactivo</span>}
-            </div>
-            <div className="col-span-4 flex gap-2 justify-end">
-              {isAdmin && (
-                <>
-                  <Button
-                    onClick={() => handleEdit(product)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm"
-                    title="Editar producto"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(product.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-3 rounded-lg transition-colors duration-200 shadow-sm"
-                    title="Eliminar producto"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
     </div>
   );

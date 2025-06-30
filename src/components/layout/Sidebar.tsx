@@ -64,33 +64,31 @@ export default function Sidebar() {
   const filteredNavItems = navItems.filter((item) => !item.adminOnly || user?.role === 'ADMIN');
 
   return (
-    <aside className="w-64 h-full bg-sidebar border-r border-sidebar-border flex flex-col shadow-sm">
+    <aside className="w-64 h-full bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50 flex flex-col shadow-2xl backdrop-blur-sm">
       {/* Header */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <Package className="w-4 h-4 text-primary-foreground" />
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform duration-200">
+            <Package className="w-5 h-5 text-white drop-shadow-sm" />
           </div>
           <div>
-            <h2 className="font-semibold text-sidebar-foreground">DespachaTec</h2>
-            <p className="text-xs text-sidebar-foreground/60">Sistema de Gestión</p>
+            <h2 className="font-bold text-lg text-white drop-shadow-sm">DespachaTec</h2>
+            <p className="text-xs text-slate-300 font-medium">Sistema de Gestión</p>
           </div>
         </div>
       </div>
 
       {/* User Info */}
-      <div className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-            <span className="text-sm font-medium text-primary">
+      <div className="p-4 border-b border-slate-700/50 bg-slate-800/50">
+        <div className="flex items-center space-x-3 p-3 rounded-xl bg-gradient-to-r from-slate-700/50 to-slate-600/50 border border-slate-600/30 shadow-lg">
+          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-md">
+            <span className="text-sm font-bold text-white drop-shadow-sm">
               {user?.email?.[0]?.toUpperCase() ?? 'A'}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">
-              Bienvenido, Admin
-            </p>
-            <p className="text-xs text-sidebar-foreground/60 truncate">
+            <p className="text-sm font-semibold text-white truncate">Bienvenido, Admin</p>
+            <p className="text-xs text-emerald-400 font-medium truncate">
               Rol: {user?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
             </p>
           </div>
@@ -98,7 +96,7 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4">
+      <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
           {filteredNavItems.map((item) => {
             const isActive = pathname === item.href;
@@ -109,22 +107,39 @@ export default function Sidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    'group flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ease-in-out',
+                    'group relative flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ease-in-out transform hover:scale-[1.02]',
                     isActive
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground shadow-sm'
-                      : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50',
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-500/25 border border-blue-400/30'
+                      : 'text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-slate-700/60 hover:to-slate-600/60 hover:shadow-md hover:border hover:border-slate-500/30',
                   )}
                 >
-                  <Icon
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-r-full shadow-lg shadow-cyan-400/50" />
+                  )}
+                  <div
                     className={cn(
-                      'w-4 h-4 transition-colors',
+                      'w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300',
                       isActive
-                        ? 'text-sidebar-accent-foreground'
-                        : 'text-sidebar-foreground/60 group-hover:text-sidebar-foreground',
+                        ? 'bg-white/20 shadow-md'
+                        : 'group-hover:bg-slate-600/50 group-hover:shadow-sm',
                     )}
-                  />
-                  <span className="flex-1">{item.title}</span>
-                  {isActive && <ChevronRight className="w-3 h-3 text-sidebar-accent-foreground" />}
+                  >
+                    <Icon
+                      className={cn(
+                        'w-4 h-4 transition-all duration-300',
+                        isActive
+                          ? 'text-white drop-shadow-sm'
+                          : 'text-slate-400 group-hover:text-white',
+                      )}
+                    />
+                  </div>
+                  <span className="flex-1 font-medium">{item.title}</span>
+                  {isActive && (
+                    <div className="flex items-center space-x-1">
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
+                      <ChevronRight className="w-4 h-4 text-white/80" />
+                    </div>
+                  )}
                 </Link>
               </li>
             );
@@ -133,13 +148,15 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-slate-700/50 bg-slate-800/30">
         <button
           onClick={logout}
-          className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-all duration-200 ease-in-out group"
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-red-600/80 hover:to-pink-600/80 transition-all duration-300 ease-in-out group transform hover:scale-[1.02] shadow-sm hover:shadow-lg hover:shadow-red-500/25 border border-transparent hover:border-red-400/30"
         >
-          <LogOut className="w-4 h-4 text-sidebar-foreground/60 group-hover:text-sidebar-foreground" />
-          <span>Cerrar sesión</span>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center group-hover:bg-white/20 transition-all duration-300">
+            <LogOut className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors duration-300" />
+          </div>
+          <span className="font-medium">Cerrar sesión</span>
         </button>
       </div>
     </aside>
